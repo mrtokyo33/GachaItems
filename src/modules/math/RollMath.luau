@@ -1,55 +1,33 @@
 local RollMath = {}
 
-function RollMath.weightToChance(weight)
-	return 1 / weight
-end
-
-function RollMath.buildPool(items, pity, config)
+function RollMath.roll(items, pity)
+	local total = 0
 	local pool = {}
-	local totalWeight = 0
 
 	for _, item in ipairs(items) do
-		local chance = RollMath.weightToChance(item.weight)
+		local chance = 1 / item.weight
 
-		if item.rarity == "Legendary" and pity >= config.softPityStart then
-			local t = (pity - config.softPityStart) / (config.hardPity - config.softPityStart)
-			local boost = 1 + t * config.legendaryBoost
-			chance *= boost
+		if item.rarity == "Legendary" then
+			chance += pity * 0.002
 		end
 
 		table.insert(pool, {
 			item = item,
-			weight = chance,
+			chance = chance,
 		})
 
-		totalWeight += chance
+		total += chance
 	end
 
-	return pool, totalWeight
-end
-
-function RollMath.rollFromPool(pool, totalWeight)
-	local roll = math.random() * totalWeight
+	local r = math.random() * total
 	local acc = 0
 
 	for _, entry in ipairs(pool) do
-		acc += entry.weight
-		if roll <= acc then
+		acc += entry.chance
+		if r <= acc then
 			return entry.item
 		end
 	end
-end
-
-function RollMath.forceLegendary(items)
-	local pool = {}
-
-	for _, item in ipairs(items) do
-		if item.rarity == "Legendary" then
-			table.insert(pool, item)
-		end
-	end
-
-	return pool[math.random(#pool)]
 end
 
 return RollMath

@@ -8,7 +8,7 @@ local ItemsIndex = {
 	},
 
 	Classic = {
-		{ id = "BloxCola", rarity = "Common", weight = 1 },
+		{ id = "BloxyCola", rarity = "Common", weight = 1 },
 		{ id = "BloxyAward", rarity = "Epic", weight = 7 },
 		{ id = "DominosCrown", rarity = "Legendary", weight = 20 },
 	},

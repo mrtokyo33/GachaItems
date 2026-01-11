@@ -1,0 +1,118 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Networker = require(ReplicatedStorage.Packages.Networker)
+local ItemsIndex = require(ReplicatedStorage.Modules.game.ItemsIndex)
+local GachaIndex = require(ReplicatedStorage.Modules.game.GachaIndex)
+local RollMath = require(ReplicatedStorage.Modules.math.RollMath)
+
+local GachaServiceServer = {}
+
+function GachaServiceServer:init()
+	self.networker = Networker.server.new("GachaService", self, {
+		self.requestRoll,
+	})
+end
+
+function GachaServiceServer:getPity(player, gachaId)
+	self.pity[player] = self.pity[player] or {}
+	self.pity[player][gachaId] = self.pity[player][gachaId] or 0
+	return self.pity[player][gachaId]
+end
+
+function GachaServiceServer:requestRoll(player: Player, gachaId: string)
+	if not ItemsIndex[gachaId] or not GachaIndex[gachaId] then
+		return
+	end
+
+	self.pity[player] = self.pity[player] or {}
+	self.pity[player][gachaId] = (self.pity[player][gachaId] or 0) + 1
+
+	local pity = self.pity[player][gachaId]
+	local items = ItemsIndex[gachaId]
+	local config = GachaIndex[gachaId]
+
+	local result
+
+	if pity >= config.hardPity then
+		result = RollMath.forceLegendary(items)
+		self.pity[player][gachaId] = 0
+	else
+		local pool, total = RollMath.buildPool(items, pity, config)
+		result = RollMath.rollFromPool(pool, total)
+
+		if result.rarity == "Legendary" then
+			self.pity[player][gachaId] = 0
+		end
+	end
+
+	print(
+		"ROLLED:",
+		player.Name,
+		"| Gacha:",
+		gachaId,
+		"| Item:",
+		result.id,
+		"| Rarity:",
+		result.rarity,
+		"| Pity:",
+		self.pity[player][gachaId]
+	)
+end
+
+return GachaServiceServer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+local CollectionService = game:GetService("CollectionService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local GachaServiceClient = require(ReplicatedStorage.Shared.Services.GachaService.GachaServiceClient)
+
+for _, machine in ipairs(CollectionService:GetTagged("gacha_machine")) do
+	local part = machine:WaitForChild("interactible")
+	local prompt = part:WaitForChild("ProximityPrompt")
+
+	prompt.Triggered:Connect(function()
+		local gachaId = machine:GetAttribute("GachaId")
+		if not gachaId then
+			return
+		end
+
+		print("PRINT!")
+	end)
+end
